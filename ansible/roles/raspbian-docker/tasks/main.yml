@@ -1,0 +1,7 @@
+---
+- name: Install vim
+  apt:
+    name: vim
+    update_cache: yes
+  become: yes
+- include: install.yml

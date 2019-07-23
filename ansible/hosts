@@ -1,0 +1,2 @@
+[gateways]
+olt-gw-lite           ansible_ssh_host=olt-gw-lite.local

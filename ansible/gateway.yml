@@ -1,0 +1,10 @@
+---
+- name: Office Gateway
+  hosts: gateways
+  roles:
+    - role: "raspbian-docker"
+    - role: "docker-systemd"
+      container_name: mosquitto
+      container_repository: ansi/raspberrypi3-mosquitto
+      container_ports:
+        - "1883:1883"
