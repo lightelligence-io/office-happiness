@@ -3,6 +3,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const path = require('path');
 const address = require('address');
+const isUuid = require('uuid-validate');
 
 const readFile = promisify(fs.readFile);
 
@@ -34,13 +35,9 @@ function connectLocal() {
   });
 }
 
-function sendData(client, deviceId, type, value) {
+function sendData(client, payload) {
   return new Promise((resolve, reject) => {
-    client.publish('data-ingest', JSON.stringify({
-      type,
-      value,
-      deviceId,
-    }), (err) => {
+    client.publish('data-ingest', JSON.stringify(payload), (err) => {
       if (err) {
         reject(err);
         return;
@@ -54,8 +51,11 @@ function sendIpAddress(oltClient) {
   setTimeout(() => {
     sendIpAddress(oltClient);
   }, 600 * 1000);
-  return sendData(oltClient, undefined, 'configuration', {
-    ip: address.ip(),
+  return sendData(oltClient, {
+    type: 'configuration',
+    value: {
+      ip: address.ip(),
+    }
   });
 }
 
@@ -64,11 +64,16 @@ function messageToPayload(topic, message) {
   if (!matched) {
     return null;
   }
+
   const result = {
-    deviceId: matched[1],
     type: matched[2],
     value: {},
   };
+  if (isUuid(matched[1])) {
+    result.deviceId = matched[1];
+  } else {
+    result.alias = matched[1];
+  }
   result.value[matched[3]] = message;
   return result;
 }
@@ -82,7 +87,7 @@ function subscribeLocal(localClient, oltClient) {
         console.log(`Unrecognized topic ${topic}`);
         return;
       }
-      sendData(oltClient, payload.deviceId, payload.type, payload.value);
+      sendData(oltClient, payload);
     });
     localClient.subscribe('#', (err) => {
       if (err) {
