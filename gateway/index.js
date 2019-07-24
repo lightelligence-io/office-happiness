@@ -55,7 +55,7 @@ function sendIpAddress(oltClient) {
     type: 'configuration',
     value: {
       ip: address.ip(),
-    }
+    },
   });
 }
 
@@ -70,9 +70,9 @@ function messageToPayload(topic, message) {
     value: {},
   };
   if (isUuid(matched[1])) {
-    result.deviceId = matched[1];
+    result.deviceId = matched[1]; // eslint-disable-line
   } else {
-    result.alias = matched[1];
+    result.alias = matched[1]; // eslint-disable-line
   }
   result.value[matched[3]] = message;
   return result;
@@ -82,7 +82,13 @@ function subscribeLocal(localClient, oltClient) {
   return new Promise((resolve, reject) => {
     localClient.on('message', (topic, message) => {
       console.log(topic, message.toString());
-      const payload = messageToPayload(topic, JSON.parse(message.toString()));
+      let msg;
+      try {
+        msg = JSON.parse(message.toString());
+      } catch (e) {
+        msg = message.toString();
+      }
+      const payload = messageToPayload(topic, msg);
       if (!payload) {
         console.log(`Unrecognized topic ${topic}`);
         return;
