@@ -8,3 +8,8 @@
       container_repository: ansi/raspberrypi3-mosquitto
       container_ports:
         - "1883:1883"
+    - role: "docker-systemd"
+      container_name: olt-gateway
+      container_repository: lightelligenceio/olt-gateway-lite-rpi3
+      container_volumes:
+        - "/home/pi/certs:/app/certs"
