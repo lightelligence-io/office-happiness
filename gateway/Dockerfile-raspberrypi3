@@ -7,9 +7,6 @@ ENV SOURCES /app
 COPY . ${SOURCES}
 WORKDIR ${SOURCES}
 
-RUN chown -R node:node ${SOURCES}
-USER node
-
 RUN npm ci --production --quiet
 
 CMD npm start
