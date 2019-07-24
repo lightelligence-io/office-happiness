@@ -1,0 +1,12 @@
+FROM resin/raspberrypi3-node:8
+
+ENV NPM_CONFIG_LOGLEVEL warn
+ENV NODE_ENV production
+
+RUN mkdir -p /var/gateway
+WORKDIR /var/gateway
+COPY . /var/gateway
+
+RUN npm ci --production
+
+CMD npm start
