@@ -3,6 +3,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const path = require('path');
 const address = require('address');
+const isUuid = require('uuid-validate');
 
 const readFile = promisify(fs.readFile);
 
@@ -63,11 +64,16 @@ function messageToPayload(topic, message) {
   if (!matched) {
     return null;
   }
+
   const result = {
-    deviceId: matched[1],
     type: matched[2],
     value: {},
   };
+  if (isUuid(matched[1])) {
+    result.deviceId = matched[1];
+  } else {
+    result.alias = matched[1];
+  }
   result.value[matched[3]] = message;
   return result;
 }
