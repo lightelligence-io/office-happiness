@@ -1,12 +1,14 @@
-FROM arm32v7/node:10
+FROM resin/raspberrypi3-node:8
 
 ENV NPM_CONFIG_LOGLEVEL warn
 ENV NODE_ENV production
 ENV SOURCES /app
 
+RUN mkdir ${SOURCES}
 COPY . ${SOURCES}
+
 WORKDIR ${SOURCES}
 
-RUN npm ci --production --quiet
+RUN npm install --only=production
 
 CMD npm start
