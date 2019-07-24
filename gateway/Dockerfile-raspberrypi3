@@ -1,4 +1,4 @@
-FROM resin/raspberrypi3-node:8
+FROM resin/raspberrypi3-node:9
 
 ENV NPM_CONFIG_LOGLEVEL warn
 ENV NODE_ENV production
