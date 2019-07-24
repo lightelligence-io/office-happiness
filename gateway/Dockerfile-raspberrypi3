@@ -2,11 +2,14 @@ FROM arm32v7/node:10
 
 ENV NPM_CONFIG_LOGLEVEL warn
 ENV NODE_ENV production
+ENV SOURCES /app
 
-RUN mkdir -p /var/gateway
-WORKDIR /var/gateway
-COPY . /var/gateway
+COPY . ${SOURCES}
+WORKDIR ${SOURCES}
 
-RUN npm ci --production
+RUN chown -R node:node ${SOURCES}
+USER node
+
+RUN npm ci --production --quiet
 
 CMD npm start
