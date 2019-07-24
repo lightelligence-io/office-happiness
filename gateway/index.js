@@ -1,15 +1,18 @@
 const mqtt = require('mqtt');
-const { promises: fsPromises } = require('fs');
+const fs = require('fs');
+const { promisify } = require('util');
 const path = require('path');
 const address = require('address');
+
+const readFile = promisify(fs.readFile);
 
 const topicRegexp = /device\/([a-zA-Z0-9_-]+)\/(attributes|configuration)\/([a-zA-Z0-9_-]+)/;
 
 function connectLightelligence() {
   return Promise.all([
-    fsPromises.readFile(path.resolve(__dirname, 'device_key.pem'), 'utf-8'),
-    fsPromises.readFile(path.resolve(__dirname, 'device_cert.pem'), 'utf-8'),
-    fsPromises.readFile(path.resolve(__dirname, 'olt_ca.pem'), 'utf-8'),
+    readFile(path.resolve(__dirname, 'device_key.pem'), 'utf-8'),
+    readFile(path.resolve(__dirname, 'device_cert.pem'), 'utf-8'),
+    readFile(path.resolve(__dirname, 'olt_ca.pem'), 'utf-8'),
   ])
     .then(([deviceKey, deviceCert, oltCa]) => new Promise((resolve, reject) => {
       const client = mqtt.connect('mqtts://mqtt.lightelligence.io', {
