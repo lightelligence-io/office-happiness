@@ -98,10 +98,13 @@ Promise.all([
   connectLightelligence(),
   connectLocal(),
 ])
-  .then(([oltClient, localClient]) => Promise.all([
-    sendIpAddress(oltClient),
-    subscribeLocal(localClient, oltClient),
-  ]))
+  .then(([oltClient, localClient]) => {
+    console.log('Connected to MQTT endpoints');
+    return Promise.all([
+      sendIpAddress(oltClient),
+      subscribeLocal(localClient, oltClient),
+    ]);
+  })
   .catch((err) => {
     console.error(err);
     process.exit(1);
