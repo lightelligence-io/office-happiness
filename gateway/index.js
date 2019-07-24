@@ -59,12 +59,12 @@ function sendIpAddress(oltClient) {
 function messageToPayload(topic, message) {
   const matched = topic.match(topicRegexp);
   if (!matched) {
-    return;
+    return null;
   }
   const result = {
     deviceId: matched[1],
     type: matched[2],
-    value: {}
+    value: {},
   };
   result.value[matched[3]] = message;
   return result;
