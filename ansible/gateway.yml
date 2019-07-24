@@ -13,3 +13,5 @@
       container_repository: lightelligenceio/olt-gateway-lite-rpi3
       container_volumes:
         - "/home/pi/certs:/app/certs"
+      container_extra_options:
+        - "--net host"
