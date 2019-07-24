@@ -8,6 +8,7 @@ RUN mkdir ${SOURCES}
 COPY . ${SOURCES}
 
 WORKDIR ${SOURCES}
+VOLUME /app/certs
 
 RUN npm install --only=production
 

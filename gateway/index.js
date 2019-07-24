@@ -10,9 +10,9 @@ const topicRegexp = /device\/([a-zA-Z0-9_-]+)\/(attributes|configuration)\/([a-z
 
 function connectLightelligence() {
   return Promise.all([
-    readFile(path.resolve(__dirname, 'device_key.pem'), 'utf-8'),
-    readFile(path.resolve(__dirname, 'device_cert.pem'), 'utf-8'),
-    readFile(path.resolve(__dirname, 'olt_ca.pem'), 'utf-8'),
+    readFile(path.resolve(__dirname, 'certs/device_key.pem'), 'utf-8'),
+    readFile(path.resolve(__dirname, 'certs/device_cert.pem'), 'utf-8'),
+    readFile(path.resolve(__dirname, 'certs/olt_ca.pem'), 'utf-8'),
   ])
     .then(([deviceKey, deviceCert, oltCa]) => new Promise((resolve, reject) => {
       const client = mqtt.connect('mqtts://mqtt.lightelligence.io', {
