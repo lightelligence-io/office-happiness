@@ -5,10 +5,7 @@
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include <DHT_U.h>
-
-#define DHTPIN            D5
-#define DHTTYPE           DHT11
-DHT_Unified dht(DHTPIN, DHTTYPE);
+#include <MQ135.h>
 
 struct Config {
   const char *wifiSsid = WIFI_SSID;
@@ -16,12 +13,25 @@ struct Config {
   const char *deviceIdentifier = DEVICE_UUID;
   const char *mqttServer = "olt-gw-lite.local";
   const uint16_t mqttPort = 1883;
+  const int pinMotion = D0;
 } cfg;
 
+DHT_Unified dht(D5, DHT11);
+
+MQ135 gasSensor = MQ135(A0);
 
 String clientName = "ESP8266Client-";
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+
+long nextEnvCheck = 0;
+const int numReadings = 1000;
+long nextMotionCheck = 0;
+long nextMotionSend = 0;
+int readings[numReadings];
+int readIndex = 0;
+int total = 0;
+float average = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -38,6 +48,7 @@ void setup() {
   
   delay(1000);
 
+  pinMode(cfg.pinMotion, INPUT);
   dht.begin();
 
   client.setServer(cfg.mqttServer, cfg.mqttPort);
@@ -66,8 +77,6 @@ boolean sendAttribute(const char* key, const char* value) {
   return client.publish(std::string("device/"+std::string(cfg.deviceIdentifier)+"/attributes/"+std::string(key)).c_str(), value);
 }
 
-long nextEnvCheck = 0;
-
 void loop() {
   static bool connected = false;
 
@@ -76,25 +85,53 @@ void loop() {
       Serial.printf("Wifi connected: ip=%s\r\n", WiFi.localIP().toString().c_str());
       connected = reconnect();
     }
-
-    if (millis() > nextEnvCheck) {
-      // Read DHT
-      sensors_event_t event;
-      dht.temperature().getEvent(&event);
-      if (!isnan(event.temperature)) {
-        sendAttribute("temperature", String(event.temperature).c_str());
-      }
-      dht.humidity().getEvent(&event);
-      if (!isnan(event.relative_humidity)) {
-        sendAttribute("humidity", String(event.relative_humidity).c_str());
-      }
-    }
-
-    nextEnvCheck += 300000;
   } else {
     if (connected) {
       connected = false;
       Serial.println("Lost wifi connection.");
     }
   }
+
+  if (connected && millis() > nextEnvCheck) {
+    // Read DHT
+    sensors_event_t event;
+    dht.temperature().getEvent(&event);
+    if (!isnan(event.temperature)) {
+      sendAttribute("temperature", String(event.temperature).c_str());
+    }
+    dht.humidity().getEvent(&event);
+    if (!isnan(event.relative_humidity)) {
+      sendAttribute("humidity", String(event.relative_humidity).c_str());
+    }
+
+    // Read gas sensor
+    float ppm = gasSensor.getPPM();
+    sendAttribute("ppm", String(ppm).c_str());
+
+    nextEnvCheck += 30000;
+  }
+
+  if (connected && millis() > nextMotionCheck) {
+     // Read motion sensor
+     total = total - readings[readIndex];
+     readings[readIndex] = digitalRead(cfg.pinMotion);
+     total = total + readings[readIndex];
+     average = ((float) total / numReadings);
+     if (millis() > nextMotionSend) {
+       Serial.printf("PIR state is %d (total %d), latest value %d\r\n", average, total, readings[readIndex]);
+       if (average < 0.80) {
+         sendAttribute("motion", "0.00");
+       } else {
+         sendAttribute("motion", String(average).c_str());
+       }
+       nextMotionSend += 30000;
+    }
+    readIndex = readIndex + 1;
+    if (readIndex >= numReadings) {
+      readIndex = 0;
+    }
+    nextMotionCheck += 10;
+  }
+
+  client.loop();
 }
