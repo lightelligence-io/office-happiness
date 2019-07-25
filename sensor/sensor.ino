@@ -2,6 +2,13 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <PubSubClient.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+
+#define DHTPIN            D5
+#define DHTTYPE           DHT11
+DHT_Unified dht(DHTPIN, DHTTYPE);
 
 struct Config {
   const char *wifiSsid = WIFI_SSID;
@@ -31,6 +38,8 @@ void setup() {
   
   delay(1000);
 
+  dht.begin();
+
   client.setServer(cfg.mqttServer, cfg.mqttPort);
 }
 
@@ -47,16 +56,41 @@ boolean reconnect() {
   return client.connected();
 }
 
+boolean sendConfiguration(const char* key, const char* value) {
+  Serial.printf("====> sending configuration %s: value=%s\r\n", key, value);
+  return client.publish(std::string("device/"+std::string(cfg.deviceIdentifier)+"/configuration/"+std::string(key)).c_str(), value);
+}
+
+boolean sendAttribute(const char* key, const char* value) {
+  Serial.printf("====> sending attribute %s: value=%s\r\n", key, value);
+  return client.publish(std::string("device/"+std::string(cfg.deviceIdentifier)+"/attributes/"+std::string(key)).c_str(), value);
+}
+
+long nextEnvCheck = 0;
+
 void loop() {
   static bool connected = false;
 
   if (WiFi.status() == WL_CONNECTED) {
     if (!connected) {
       Serial.printf("Wifi connected: ip=%s\r\n", WiFi.localIP().toString().c_str());
-      reconnect();
+      connected = reconnect();
     }
-    
-    connected = true;
+
+    if (millis() > nextEnvCheck) {
+      // Read DHT
+      sensors_event_t event;
+      dht.temperature().getEvent(&event);
+      if (!isnan(event.temperature)) {
+        sendAttribute("temperature", String(event.temperature).c_str());
+      }
+      dht.humidity().getEvent(&event);
+      if (!isnan(event.relative_humidity)) {
+        sendAttribute("humidity", String(event.relative_humidity).c_str());
+      }
+    }
+
+    nextEnvCheck += 300000;
   } else {
     if (connected) {
       connected = false;
