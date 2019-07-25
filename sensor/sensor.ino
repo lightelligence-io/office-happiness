@@ -47,7 +47,7 @@ boolean reconnect() {
   if (!client.connected()) {
     if (client.connect((char*) clientName.c_str())) {
         Serial.printf("===> mqtt connected by %s\n", clientName.c_str());
-        client.publish(std::string("device/"+std::string(cfg.deviceIdentifier)+"/configuration/ip").c_str(), WiFi.localIP().toString().c_str());
+        sendConfiguration("ip", WiFi.localIP().toString().c_str());
     } else {
         Serial.print("---> mqtt failed, rc=");
         Serial.println(client.state());
