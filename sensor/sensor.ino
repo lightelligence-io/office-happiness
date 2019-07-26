@@ -105,8 +105,10 @@ void loop() {
     }
 
     // Read gas sensor
-    float ppm = gasSensor.getPPM();
-    sendAttribute("ppm", String(ppm).c_str());
+    if (!isnan(event.relative_humidity) && !isnan(event.temperature)) {
+      float ppm = gasSensor.getCorrectedPPM(event.temperature, event.relative_humidity);
+      sendAttribute("ppm", String(ppm).c_str());
+    }
 
     nextEnvCheck += 30000;
   }
