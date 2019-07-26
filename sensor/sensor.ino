@@ -13,7 +13,7 @@ struct Config {
   const char *deviceIdentifier = DEVICE_UUID;
   const char *mqttServer = "olt-gw-lite.local";
   const uint16_t mqttPort = 1883;
-  const int pinMotion = D0;
+  const int pinMotion = D6;
 } cfg;
 
 DHT_Unified dht(D5, DHT11);
@@ -121,11 +121,7 @@ void loop() {
      average = ((float) total / numReadings);
      if (millis() > nextMotionSend) {
        Serial.printf("PIR state is %d (total %d), latest value %d\r\n", average, total, readings[readIndex]);
-       if (average < 0.80) {
-         sendAttribute("motion", "0.00");
-       } else {
-         sendAttribute("motion", String(average).c_str());
-       }
+       sendAttribute("motion", String(average).c_str());
        nextMotionSend += 30000;
     }
     readIndex = readIndex + 1;
