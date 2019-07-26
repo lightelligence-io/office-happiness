@@ -1,0 +1,12 @@
+// rename this file to config.h and enter the correct WiFi credentials and device UUID/alias
+#ifndef WIFI_SSID
+#define WIFI_SSID "My WiFi"
+#endif
+
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "My Password"
+#endif
+
+#ifndef DEVICE_UUID
+#define DEVICE_UUID "3106103b-bf36-41c7-8911-d86a97d340cc"
+#endif
