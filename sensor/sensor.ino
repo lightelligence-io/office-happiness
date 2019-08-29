@@ -16,7 +16,7 @@ struct Config {
   const int pinMotion = D6;
 } cfg;
 
-DHT_Unified dht(D5, DHT11);
+DHT_Unified dht(D5, DHT22);
 
 MQ135 gasSensor = MQ135(A0);
 
@@ -98,19 +98,27 @@ void loop() {
     dht.temperature().getEvent(&event);
     if (!isnan(event.temperature)) {
       sendAttribute("temperature", String(event.temperature).c_str());
+    } else {
+      sendAttribute("temperature", "error");
     }
     dht.humidity().getEvent(&event);
     if (!isnan(event.relative_humidity)) {
       sendAttribute("humidity", String(event.relative_humidity).c_str());
+    } else {
+      sendAttribute("humidity", "error");
     }
 
     // Read gas sensor
     if (!isnan(event.relative_humidity) && !isnan(event.temperature)) {
       float ppm = gasSensor.getCorrectedPPM(event.temperature, event.relative_humidity);
       sendAttribute("ppm", String(ppm).c_str());
+    } else if (!isnan(event.relative_humidity) && isnan(event.temperature)) {
+      sendAttribute("ppm", "Gas sensor needs valid humidity");
+    } else {
+      sendAttribute("ppm", "error");
     }
 
-    nextEnvCheck += 30000;
+    nextEnvCheck += 10000;
   }
 
   if (connected && millis() > nextMotionCheck) {
